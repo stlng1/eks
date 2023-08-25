@@ -57,7 +57,8 @@ variable "developer_users" {
 }
 
 variable "asg_instance_types" {
-  type        = list(string)
+  #type        = list(string)
+  # type        = number
   description = "List of EC2 instance machine types to be used in EKS."
 }
 
