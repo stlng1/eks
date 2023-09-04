@@ -48,12 +48,12 @@ resource "aws_dynamodb_table" "terraform_locks" {
  After the creation you can uncomment it,
  run "terraform init" and then "terraform apply" */
 
-# terraform {
-#   backend "s3" {
-#     bucket         = var.bucket_name
-#     key            = "global/s3/terraform.tfstate"
-#     region         = var.region
-#     dynamodb_table = var.table_name
-#     encrypt        = true
-#   }
-# }
+terraform {
+  backend "s3" {
+    bucket         = "krusha-terraform-bucket"
+    key            = "global/s3/terraform.tfstate"
+    region         = "eu-west-3"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
