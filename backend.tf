@@ -1,16 +1,13 @@
-#############################
-##creating bucket for s3 backend
-#########################
+# backend.tf
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.bucket_name
 
   # Prevent accidental deletion of this S3 bucket
   lifecycle {
-    prevent_destroy = true
+    prevent_destroy = false
   }
 }
-
 
 resource "aws_s3_bucket_versioning" "enabled" {
   bucket = aws_s3_bucket.terraform_state.id
@@ -18,7 +15,6 @@ resource "aws_s3_bucket_versioning" "enabled" {
     status = "Enabled"
   }
 }
-
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
   bucket = aws_s3_bucket.terraform_state.id
@@ -29,7 +25,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
     }
   }
 }
-
 
 resource "aws_dynamodb_table" "terraform_locks" {
   name         = var.table_name
@@ -42,18 +37,17 @@ resource "aws_dynamodb_table" "terraform_locks" {
 }
 
 
-
 /*# Backend must remain commented until the Bucket
  and the DynamoDB table are created. 
  After the creation you can uncomment it,
  run "terraform init" and then "terraform apply" */
 
-terraform {
-  backend "s3" {
-    bucket         = "krusha-terraform-bucket"
-    key            = "global/s3/terraform.tfstate"
-    region         = "eu-west-3"
-    dynamodb_table = "terraform-locks"
-    encrypt        = true
-  }
-}
+# terraform {
+#   backend "s3" {
+#     bucket         = var.bucket_name
+#     key            = "global/s3/terraform.tfstate"
+#     region         = var.region
+#     dynamodb_table = var.table_name
+#     encrypt        = true
+#   }
+# }
