@@ -1,0 +1,23 @@
+postgresql:
+  enabled: true
+  postgresqlUsername: artifactory
+  postgresqlPassword: Passw0rd
+  postgresqlDatabase: artifactory
+#databaseUpgradeReady: true
+#unifiedUpgradeAllowed: true
+
+artifactory:
+  database:
+    type: postgresql
+    host: postgresql
+    port: 5432
+    name: artifactory
+    username: artifactory
+    password: Passw0rd
+#  masterKeySecretName: my-masterkey-secret
+#  joinKeySecretName: my-joinkey-secret
+#  license:
+#    secret: artifactory-cluster-license
+#    dataKey: art.lic
+nginx:
+  enabled: false

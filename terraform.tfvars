@@ -11,5 +11,5 @@ admin_users                    = ["kuby", "project24"]
 developer_users                = ["kuby", "project24"]
 asg_instance_types                       = [{ instance_type = "t3.small" }, { instance_type = "t2.small" }, ]
 autoscaling_minimum_size_by_az           = 1
-autoscaling_maximum_size_by_az           = 10
-autoscaling_average_cpu                  = 30
+autoscaling_maximum_size_by_az           = 5
+autoscaling_average_cpu                  = 60

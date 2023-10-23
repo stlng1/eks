@@ -6,6 +6,8 @@ resource "aws_s3_bucket" "terraform_state" {
   # Prevent accidental deletion of this S3 bucket
   lifecycle {
     prevent_destroy = false
+  #  force_destroy: "false" => "true"
+  #  force_destroy = true
   }
 }
 
@@ -42,12 +44,12 @@ resource "aws_dynamodb_table" "terraform_locks" {
  After the creation you can uncomment it,
  run "terraform init" and then "terraform apply" */
 
-# terraform {
-#   backend "s3" {
-#     bucket         = "krusha-terraform-bucket"
-#     key            = "global/s3/terraform.tfstate"
-#     region         = "eu-west-3"
-#     dynamodb_table = "terraform-locks"
-#     encrypt        = true
-#   }
-# }
+ #terraform {
+ # backend "s3" {
+ #   bucket         = "krusha-terraform-bucket"
+ #   key            = "global/s3/terraform.tfstate"
+ #   region         = "eu-west-3"
+ #   dynamodb_table = "terraform-locks"
+ #   encrypt        = true
+ # }
+#}
