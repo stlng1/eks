@@ -76,6 +76,11 @@ resource "aws_iam_role_policy_attachment" "nodes-AmazonEC2ContainerRegistryReadO
   role       = aws_iam_role.eks-group-nodes.name
 }
 
+resource "aws_iam_role_policy_attachment" "nodes-AmazonS3FullAccess_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+  role       = aws_iam_role.eks-group-nodes.name
+}
+
 ## create iam role for eks service account
 data "aws_iam_policy_document" "eks_service_account_assume_role_policy" {
   statement {
@@ -100,28 +105,62 @@ resource "aws_iam_role" "eks_service_account_role" {
   name               = "eks_service_account_role"
 }
 
-resource "aws_iam_policy" "eks_service_account_policy" {
-  name = "eks_service_account_policy"
-
-  policy = jsonencode({
-    Statement = [{
-      Action = [
-        "s3:GetBucket", 
-        "s3:GetObject", 
-        "s3:PutObject"
-      ]
-      Effect   = "Allow"
-      Resource = "arn:aws:s3:::*"
-    }]
-    Version = "2012-10-17"
-  })
-}
-
 resource "aws_iam_role_policy_attachment" "eks_service_account_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
   role       = aws_iam_role.eks_service_account_role.name
-  policy_arn = aws_iam_policy.eks_service_account_policy.arn
 }
 
+# resource "aws_iam_policy" "eks_service_account_policy" {
+#   name = "eks_service_account_policy"
+
+#   policy = jsonencode({
+#     Statement = [{
+#       Action = [
+#         "s3:GetBucket", 
+#         "s3:GetObject", 
+#         "s3:PutObject"
+#       ]
+#       Effect   = "Allow"
+#       Resource = "arn:aws:s3:::*"
+#     }]
+#     Version = "2012-10-17"
+#   })
+# }
+
+# resource "aws_iam_role_policy_attachment" "eks_service_account_policy_attachment" {
+#   role       = aws_iam_role.eks_service_account_role.name
+#   policy_arn = aws_iam_policy.eks_service_account_policy.arn
+# }
+
+
+## create iam role for artifactory service account
+data "aws_iam_policy_document" "artifactory_service_account_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    condition {
+      test     = "StringEquals"
+      variable = "${replace(aws_iam_openid_connect_provider.eks-cluster.url, "https://", "")}:sub"
+      values   = ["system:serviceaccount:jfrog:artifactory-sa"]
+    }
+
+    principals {
+      identifiers = [aws_iam_openid_connect_provider.eks-cluster.arn]
+      type        = "Federated"
+    }
+  }
+}
+
+resource "aws_iam_role" "artifactory_service_account_role" {
+  assume_role_policy = data.aws_iam_policy_document.artifactory_service_account_assume_role_policy.json
+  name               = "artifactory_service_account_role"
+}
+
+resource "aws_iam_role_policy_attachment" "artifactory_service_account_policy_attachment" {
+  role       = aws_iam_role.artifactory_service_account_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
 
 ## create iam role for ebs-csi-driver
 data "aws_iam_policy" "ebs_csi_policy" {

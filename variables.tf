@@ -10,7 +10,7 @@ variable "table_name" {
   default = "terraform-locks"
 }
 
-variable "region" {
+variable "aws_region" {
   description = "The name of the aws region"
   type        = string
   default = "eu-west-3"

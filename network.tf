@@ -58,3 +58,19 @@ private_subnet_tags = {
 iac_environment                             = var.iac_environment_tag
 }
 }
+
+#create VPC Endpoint Gateway on the private subnet of the VPC
+
+resource "aws_vpc_endpoint" "aws_s3_endpoint" {
+  vpc_id = module.vpc.vpc_id
+  service_name    = "com.amazonaws.${var.aws_region}.s3"
+#  route_table_ids = ["${var.route_table_id}"]
+}
+
+#VPC Endpoint Gateway for s3 
+#module "vpc_ep_gw" {
+#  source         = "./aws_s3_endpoint"
+#  aws_region = var.aws_region
+#  vpc_id         = module.vpc.vpc_id
+#  route_table_id = module.vpc.private_route_table_id
+#} 

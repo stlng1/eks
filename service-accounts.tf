@@ -26,3 +26,15 @@ resource "kubernetes_service_account" "ebs_csi_controller_sa" {
   }
 }
 }
+
+## create a Kubernetes service account for artifactory
+
+resource "kubernetes_service_account" "artifactory_sa" {
+  metadata {
+    name = "artifactory-sa"
+    namespace = "jfrog"
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.artifactory_service_account_role.arn
+  }
+}
+}

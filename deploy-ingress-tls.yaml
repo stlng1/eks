@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    spec.ingressClassName: nginx
+  name: artifactory
+spec:
+  rules:
+  - host: "tooling.artifactory.sandbox.svc.strange.io"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: artifactory
+            port:
+              number: 8082
+  tls:
+  - hosts:
+    - "tooling.artifactory.sandbox.svc.strange.io"
+    secretName: "tooling.artifactory.sandbox.svc.strange.io"

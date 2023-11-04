@@ -91,15 +91,26 @@ rbac:
 ## Service Account
 ## Ref: https://kubernetes.io/docs/admin/service-accounts-admin/
 ##
-serviceAccount:
-  create: false
-  ## The name of the ServiceAccount to use.
-  ## If not set and create is true, a name is generated using the fullname template
-  name:
-  ## Service Account annotations
-  annotations: {}
-  ## Explicitly mounts the API credentials for the Service Account
-  automountServiceAccountToken: false
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::346878537095:role/artifactory_service_account_role
+    automountServiceAccountToken: true
+
+
+
+
+# serviceAccount:
+#   create: true
+#   ## The name of the ServiceAccount to use.
+#   ## If not set and create is true, a name is generated using the fullname template
+#   name:
+#   ## Service Account annotations
+#   annotations: {
+#     eks.amazonaws.com/role-arn: arn:aws:iam::346878537095:role/artifactory_service_account_role
+#     }
+#   ## Explicitly mounts the API credentials for the Service Account
+#   automountServiceAccountToken: false
 ingress:
   enabled: false
   defaultBackend:
@@ -505,13 +516,17 @@ artifactory:
 
   ## Artifactory license.
   license:
-    ## licenseKey is the license key in plain text. Use either this or the license.secret setting
-    licenseKey:
-    ## If artifactory.license.secret is passed, it will be mounted as
-    ## ARTIFACTORY_HOME/etc/artifactory.lic and loaded at run time.
-    secret:
-    ## The dataKey should be the name of the secret data key created.
-    dataKey:
+    secret: artifactory-licenses
+    dataKey: artifactory.cluster.lic
+  
+  # license:
+  #   ## licenseKey is the license key in plain text. Use either this or the license.secret setting
+  #   licenseKey:
+  #   ## If artifactory.license.secret is passed, it will be mounted as
+  #   ## ARTIFACTORY_HOME/etc/artifactory.lic and loaded at run time.
+  #   secret:
+  #   ## The dataKey should be the name of the secret data key created.
+  #   dataKey:
   ## Create configMap with artifactory.config.import.xml and security.import.xml and pass name of configMap in following parameter
   configMapName:
   # Add any list of configmaps to Artifactory
@@ -797,36 +812,52 @@ artifactory:
 
     ingress:
       enabled: true
-      name:
-      hosts: []
-      className: ""
-      annotations: {}
-      # kubernetes.io/ingress.class: nginx
-      # nginx.ingress.kubernetes.io/proxy-buffering: "off"
-      # nginx.ingress.kubernetes.io/configuration-snippet: |
-      #   chunked_transfer_encoding on;
-      tls: []
-      #  Secrets must be manually created in the namespace.
-      # - hosts:
-      #   - artifactory.domain.example
-      #   secretName: chart-example-tls-secret
-    ## When replicator is enabled and want to use tracker feature, trackerIngress.enabled flag should be set to true
-    ## Please refer - https://www.jfrog.com/confluence/display/JFROG/JFrog+Peer-to-Peer+%28P2P%29+Downloads
-    trackerIngress:
-      enabled: false
-      name:
-      hosts: []
-      className: ""
-      annotations: {}
-      # kubernetes.io/ingress.class: nginx
-      # nginx.ingress.kubernetes.io/proxy-buffering: "off"
-      # nginx.ingress.kubernetes.io/configuration-snippet: |
-      #   chunked_transfer_encoding on;
-      tls: []
-      #  Secrets must be manually created in the namespace.
-      # - hosts:
-      #   - artifactory.domain.example
-      #   secretName: chart-example-tls-secret
+      routerPath: /
+      artifactoryPath: /artifactory/
+      className: alb
+      annotations:
+        alb.ingress.kubernetes.io/scheme: internet-facing
+        alb.ingress.kubernetes.io/target-type: ip
+        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+        alb.ingress.kubernetes.io/ssl-redirect: '443'
+        alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-2016-08
+        # name of the future ALB
+        alb.ingress.kubernetes.io/load-balancer-name: tooling-alb-eks
+
+        alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-3:346878537095:certificate/<CERT_ID>
+
+    # ingress:
+    #   enabled: true
+    #   name:
+    #   hosts: []
+    #   className: ""
+    #   annotations: {}
+    #   # kubernetes.io/ingress.class: nginx
+    #   # nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    #   # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #   #   chunked_transfer_encoding on;
+    #   tls: []
+    #   #  Secrets must be manually created in the namespace.
+    #   # - hosts:
+    #   #   - artifactory.domain.example
+    #   #   secretName: chart-example-tls-secret
+    # ## When replicator is enabled and want to use tracker feature, trackerIngress.enabled flag should be set to true
+    # ## Please refer - https://www.jfrog.com/confluence/display/JFROG/JFrog+Peer-to-Peer+%28P2P%29+Downloads
+    # trackerIngress:
+    #   enabled: false
+    #   name:
+    #   hosts: []
+    #   className: ""
+    #   annotations: {}
+    #   # kubernetes.io/ingress.class: nginx
+    #   # nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    #   # nginx.ingress.kubernetes.io/configuration-snippet: |
+    #   #   chunked_transfer_encoding on;
+    #   tls: []
+    #   #  Secrets must be manually created in the namespace.
+    #   # - hosts:
+    #   #   - artifactory.domain.example
+    #   #   secretName: chart-example-tls-secret
   ## IMPORTANT: If overriding artifactory.internalPort:
   ## DO NOT use port lower than 1024 as Artifactory runs as non-root and cannot bind to ports lower than 1024!
   externalPort: 8082
@@ -915,7 +946,7 @@ artifactory:
     ## azure-blob
     ## azure-blob-storage-direct
     ## cluster-azure-blob-storage
-    type: file-system
+    type: s3-storage-v3-direct
     ## Use binarystoreXml to provide a custom binarystore.xml
     ## This is intentionally commented and below previous content of binarystoreXml is moved under files/binarystore.xml
     ## binarystoreXml:
@@ -960,7 +991,7 @@ artifactory:
       endpoint: commondatastorage.googleapis.com
       httpsOnly: false
       # Set a unique bucket name
-      bucketName: "artifactory-gcp"
+      # bucketName: "artifactory-gcp"
       ## GCP Bucket Authentication with Identity and Credential is deprecated.
       ## identity:
       ## credential:
@@ -970,13 +1001,13 @@ artifactory:
       enableSignedUrlRedirect: false
     ## For artifactory.persistence.type aws-s3-v3, s3-storage-v3-direct, cluster-s3-storage-v3, s3-storage-v3-archive
     awsS3V3:
-      testConnection: false
+      testConnection: true
       identity:
       credential:
-      region:
-      bucketName: artifactory-aws
+      region: eu-west-3
+      bucketName: krusha-terraform-bucket
       path: artifactory/filestore
-      endpoint:
+      endpoint: s3.eu-west-3.amazonaws.com
       port:
       useHttp:
       maxConnections: 50
