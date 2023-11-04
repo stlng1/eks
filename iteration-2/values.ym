@@ -1,0 +1,39 @@
+global:
+
+artifactory:
+ serviceAccount:
+   create: true
+   annotations:
+     eks.amazonaws.com/role-arn: arn:aws:iam::346878537095:role/artifactory_service_account_role
+   automountServiceAccountToken: true
+ artifactory:
+   license:
+     secret: artifactory-licenses
+     dataKey: artifactory.cluster.lic
+ ingress:
+   enabled: true
+   routerPath: /
+   artifactoryPath: /artifactory/
+   className: alb
+   annotations:
+     alb.ingress.kubernetes.io/scheme: internet-facing
+     alb.ingress.kubernetes.io/target-type: ip
+     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+     alb.ingress.kubernetes.io/ssl-redirect: '443'
+     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-2016-08
+     # name of the future ALB
+     alb.ingress.kubernetes.io/load-balancer-name: aws-load-balancer-controller
+      ## consume the TLS certificates in AWS Cert Manager
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-3:346878537095:certificate/<CERT_ID>
+
+
+     type: s3-storage-v3-direct
+     awsS3V3:
+       bucketName: krusha-terraform-bucket 
+       endpoint: s3.eu-west-3.amazonaws.com
+       region: 
+        path: artifactory/filestore
+       maxConnections: 50
+       # in order to not specify identity and credential fields
+       useInstanceCredentials: true
+       testConnection: true
